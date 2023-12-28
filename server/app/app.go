@@ -3,6 +3,7 @@ package app
 import (
 	"database/sql"
 	"fmt"
+	"go-web-server/server/models/book"
 	"go-web-server/server/routes"
 	"log"
 	"net/http"
@@ -25,7 +26,7 @@ func initializeRoutes(appRouter *mux.Router) {
 	})
 }
 
-func connectToDB() {
+func connectToDB() *sql.DB {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("An error occurred while loading .env file.")
@@ -37,12 +38,15 @@ func connectToDB() {
 	if err != nil {
 		log.Fatal("Failed to connect to remote postgreSQL database.")
 	}
+
 	fmt.Println("Successfully connected to remote postgreSQL database.")
 
 	pingError := db.Ping()
 	if pingError != nil {
 		log.Fatal("An error occurred while pinging the remote postgreSQL database.")
 	}
+
+	return db
 }
 
 func listenForRequests(port int, appRouter *mux.Router) {
@@ -56,8 +60,16 @@ func listenForRequests(port int, appRouter *mux.Router) {
 
 func Initialize(port int) {
 	appRouter := mux.NewRouter()
+	appDatabase := connectToDB()
 
-	connectToDB()
+	// attempt inserting dummy data into the database
+	var interestingBook = bookModel.Book{
+		Title:  "Grokking Algorithms",
+		Author: "Aditya Y. Bhargava",
+	}
+
+	bookModel.InsertBook(interestingBook, appDatabase)
+
 	initializeRoutes(appRouter)
 	listenForRequests(port, appRouter)
 }
