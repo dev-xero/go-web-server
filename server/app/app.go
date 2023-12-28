@@ -15,10 +15,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func initializeRoutes(appRouter *mux.Router) {
+func initializeRoutes(appRouter *mux.Router, appDatabase *sql.DB) {
 	bookRouter := appRouter.PathPrefix("/books/").Subrouter()
 
-	routes.InitializeBookRoutes(bookRouter)
+	routes.InitializeBookRoutes(bookRouter, appDatabase)
 
 	// Handle requests to home
 	appRouter.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
@@ -70,6 +70,6 @@ func Initialize(port int) {
 
 	bookModel.InsertBook(interestingBook, appDatabase)
 
-	initializeRoutes(appRouter)
+	initializeRoutes(appRouter, appDatabase)
 	listenForRequests(port, appRouter)
 }
