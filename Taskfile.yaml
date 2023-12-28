@@ -1,0 +1,13 @@
+version: '3'
+
+tasks:
+   clean:
+      - go mod tidy
+      - go fmt ./...
+      - go vet ./...
+   build:
+      - task clean
+      - go build -o build/main ./server/server.go
+   serve:
+      - task clean
+      - go run ./server/server.go

@@ -1,0 +1,5 @@
+root="./server"
+tmp_dir="tmp"
+
+[build]
+cmd = "go build -o ./tmp/main ./server/server.go"
