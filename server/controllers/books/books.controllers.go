@@ -2,8 +2,10 @@ package books
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
-	"go-web-server/server/models/book"
+	bookModel "go-web-server/server/models/book"
+	"go-web-server/server/utils"
 	"log"
 	"net/http"
 
@@ -12,12 +14,28 @@ import (
 
 // Handle requests to get books
 func GetBooks(res http.ResponseWriter, req *http.Request, appDatabase *sql.DB) {
+	res.Header().Set("Content-Type", "application/json")
+
 	const getAllBooksQuery string = `SELECT * FROM books`
 	var books []bookModel.Book
+	var response utils.Response
 
 	rows, err := appDatabase.Query(getAllBooksQuery)
 	if err != nil {
-		http.Error(res, "Internal Server Error", http.StatusInternalServerError)
+		response = utils.Response{
+			Msg:     err.Error(),
+			Success: false,
+			Payload: nil,
+		}
+
+		jsonResponse, err := json.Marshal(response)
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			log.Fatal("Failed to serialize response object.")
+		}
+
+		res.WriteHeader(http.StatusBadRequest)
+		res.Write(jsonResponse)
 	}
 
 	for rows.Next() {
@@ -29,7 +47,20 @@ func GetBooks(res http.ResponseWriter, req *http.Request, appDatabase *sql.DB) {
 		books = append(books, bookModel.Book{Title: title, Author: author})
 	}
 
-	fmt.Fprint(res, books)
+	response = utils.Response{
+		Msg:     "Successfully fetched books.",
+		Success: true,
+		Payload: books,
+	}
+
+	jsonResponseData, err := json.Marshal(response)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		log.Fatal("Failed to serialize response object.")
+	}
+
+	res.WriteHeader(http.StatusOK)
+	res.Write(jsonResponseData)
 }
 
 // Handle requests to get a specific book
