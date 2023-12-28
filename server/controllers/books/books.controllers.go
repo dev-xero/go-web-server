@@ -14,8 +14,6 @@ import (
 
 // Handle requests to get books
 func GetBooks(res http.ResponseWriter, req *http.Request, appDatabase *sql.DB) {
-	res.Header().Set("Content-Type", "application/json")
-
 	const getAllBooksQuery string = `SELECT * FROM books`
 	var books []bookModel.Book
 	var response utils.Response
@@ -32,10 +30,13 @@ func GetBooks(res http.ResponseWriter, req *http.Request, appDatabase *sql.DB) {
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusInternalServerError)
 			log.Fatal("Failed to serialize response object.")
+			return
 		}
 
+		res.Header().Set("Content-Type", "application/json")
 		res.WriteHeader(http.StatusBadRequest)
 		res.Write(jsonResponse)
+		return
 	}
 
 	for rows.Next() {
@@ -59,6 +60,7 @@ func GetBooks(res http.ResponseWriter, req *http.Request, appDatabase *sql.DB) {
 		log.Fatal("Failed to serialize response object.")
 	}
 
+	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 	res.Write(jsonResponseData)
 }

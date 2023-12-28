@@ -2,9 +2,10 @@ package app
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
-	"go-web-server/server/models/book"
 	"go-web-server/server/routes"
+	"go-web-server/server/utils"
 	"log"
 	"net/http"
 	"os"
@@ -22,7 +23,21 @@ func initializeRoutes(appRouter *mux.Router, appDatabase *sql.DB) {
 
 	// Handle requests to home
 	appRouter.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
-		fmt.Fprint(res, "Welcome to the API.")
+		response := utils.Response{
+			Msg:     "Welcome to the API.",
+			Success: true,
+			Payload: nil,
+		}
+
+		jsonResponseData, err := json.Marshal(response)
+		if err != nil {
+			http.Error(res, "Internal server error.", http.StatusInternalServerError)
+			log.Fatal(err)
+		}
+
+		res.Header().Set("Content-Type", "application/json")
+		res.WriteHeader(http.StatusOK)
+		res.Write(jsonResponseData)
 	})
 }
 
@@ -61,14 +76,6 @@ func listenForRequests(port int, appRouter *mux.Router) {
 func Initialize(port int) {
 	appRouter := mux.NewRouter()
 	appDatabase := connectToDB()
-
-	// attempt inserting dummy data into the database
-	var interestingBook = bookModel.Book{
-		Title:  "Grokking Algorithms",
-		Author: "Aditya Y. Bhargava",
-	}
-
-	bookModel.InsertBook(interestingBook, appDatabase)
 
 	initializeRoutes(appRouter, appDatabase)
 	listenForRequests(port, appRouter)
